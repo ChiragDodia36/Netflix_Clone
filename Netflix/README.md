@@ -138,19 +138,17 @@ Cinemora is a fully functional streaming platform application that replicates th
 
 ### Authentication
 | Login | Sign Up |
-/Users/chiragdodia/Desktop/Simulator Screenshot - iPhone 17 - 2025-10-20 at 12.41.00.png
-/Users/chiragdodia/Desktop/Simulator Screenshot - iPhone 17 - 2025-10-20 at 12.42.02.png
+<img width="1206" height="2622" alt="Simulator Screenshot - iPhone 17 - 2025-10-20 at 12 41 00" src="https://github.com/user-attachments/assets/f5527cbc-7ded-4ebc-849f-02f74fe685e5" />
+<img width="1206" height="2622" alt="Simulator Screenshot - iPhone 17 - 2025-10-20 at 12 42 02" src="https://github.com/user-attachments/assets/24bf5ac2-985c-4095-8405-d9423dab0ae0" />
 
 ### Profile Management
 | Profile Selection | Create Profile | Manage Profiles |
-/Users/chiragdodia/Desktop/Simulator Screenshot - iPhone 17 - 2025-10-20 at 12.42.45.png
+<img width="1206" height="2622" alt="Simulator Screenshot - iPhone 17 - 2025-10-20 at 12 42 45" src="https://github.com/user-attachments/assets/9ff9b287-501d-4d41-bbf6-7ed6faf74034" />
+
 
 ### Main Experience
-/Users/chiragdodia/Desktop/Simulator Screenshot - iPhone 17 - 2025-10-20 at 12.43.03.png
-/Users/chiragdodia/Desktop/Simulator Screenshot - iPhone 17 - 2025-10-20 at 12.44.41.png
-/Users/chiragdodia/Desktop/Simulator Screenshot - iPhone 17 - 2025-10-20 at 12.45.56.png
-/Users/chiragdodia/Desktop/Simulator Screenshot - iPhone 17 - 2025-10-20 at 12.46.13.png
-/Users/chiragdodia/Desktop/Simulator Screenshot - iPhone 17 - 2025-10-20 at 12.47.43.png
+<img width="1206" height="2622" alt="Simulator Screenshot - iPhone 17 - 2025-10-20 at 12 43 03" src="https://github.com/user-attachments/assets/e2889363-d181-461c-a567-ab25a9294b83" />
+
 
 
 ## 🚀 Getting Started
