@@ -27,6 +27,7 @@ struct MyListItem: Identifiable, Codable {
     // Convert to Movie object
     func toMovie() -> Movie {
         return Movie(
+            tmdbId: 0,
             title: movieTitle,
             posterURL: moviePosterURL,
             backdropURL: movieBackdropURL,

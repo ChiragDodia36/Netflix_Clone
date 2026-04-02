@@ -10,6 +10,7 @@ import SwiftUI
 
 struct SimpleContentView: View {
     @StateObject private var searchService = SearchService.shared
+    @StateObject private var movieService = MovieService.shared
     @EnvironmentObject var profileService: ProfileService
     @EnvironmentObject var myListService: MyListService
     @State private var selectedMovie: Movie? = nil
@@ -20,97 +21,28 @@ struct SimpleContentView: View {
     @State private var showFilters = false
     @State private var filters = SearchFilters()
     @State private var downloadedMovies: [Movie] = []
-    
-    // Sample movies for demo
-    private let sampleMovies: [Movie] = [
-        Movie(
-            title: "Stranger Things",
-            posterURL: "https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
-            backdropURL: "https://image.tmdb.org/t/p/w1280/56v2KjBlU4XaOv9rVYEQypROD7P.jpg",
-            releaseYear: 2016,
-            rating: "TV-14",
-            duration: 50,
-            genre: "Sci-Fi, Horror",
-            isMovie: false,
-            isTrending: true,
-            isFeatured: true,
-            description: "When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces, and one strange little girl."
-        ),
-        Movie(
-            title: "The Crown",
-            posterURL: "https://image.tmdb.org/t/p/w500/1M876Kj8FgGzfSJkXhgdXz5QrZ5.jpg",
-            backdropURL: "https://image.tmdb.org/t/p/w1280/1M876Kj8FgGzfSJkXhgdXz5QrZ5.jpg",
-            releaseYear: 2016,
-            rating: "TV-MA",
-            duration: 60,
-            genre: "Drama, History",
-            isMovie: false,
-            isTrending: true,
-            isFeatured: false,
-            description: "Follows the political rivalries and romance of Queen Elizabeth II's reign and the events that shaped the second half of the 20th century."
-        ),
-        Movie(
-            title: "Extraction",
-            posterURL: "https://image.tmdb.org/t/p/w500/7W0G3YECgDAfnui7UOqOuR0zH4h.jpg",
-            backdropURL: "https://image.tmdb.org/t/p/w1280/7W0G3YECgDAfnui7UOqOuR0zH4h.jpg",
-            releaseYear: 2020,
-            rating: "R",
-            duration: 116,
-            genre: "Action, Thriller",
-            isMovie: true,
-            isTrending: false,
-            isFeatured: true,
-            description: "A hardened mercenary's mission becomes a soul-searing race to survive and protect one boy's innocence against overwhelming odds."
-        ),
-        Movie(
-            title: "The Queen's Gambit",
-            posterURL: "https://image.tmdb.org/t/p/w500/zU0htwkhNvBQdVSIKB9s6hgVeFK.jpg",
-            backdropURL: "https://image.tmdb.org/t/p/w1280/zU0htwkhNvBQdVSIKB9s6hgVeFK.jpg",
-            releaseYear: 2020,
-            rating: "TV-MA",
-            duration: 60,
-            genre: "Drama",
-            isMovie: false,
-            isTrending: true,
-            isFeatured: false,
-            description: "In a 1950s orphanage, a young girl reveals an astonishing talent for chess and begins an unlikely journey to stardom while grappling with addiction."
-        ),
-        Movie(
-            title: "Money Heist",
-            posterURL: "https://image.tmdb.org/t/p/w500/reEMJA1uzscCbkpeRJeTT2bjqUp.jpg",
-            backdropURL: "https://image.tmdb.org/t/p/w1280/reEMJA1uzscCbkpeRJeTT2bjqUp.jpg",
-            releaseYear: 2017,
-            rating: "TV-MA",
-            duration: 70,
-            genre: "Crime, Drama, Thriller",
-            isMovie: false,
-            isTrending: true,
-            isFeatured: false,
-            description: "An unusual group of robbers attempt to carry out the most perfect robbery in Spanish history - stealing 2.4 billion euros from the Royal Mint of Spain."
-        )
-    ]
 
     var body: some View {
-        ZStack {
-            // Modern gradient background
+        ZStack(alignment: .bottom) {
+            // Deep navy background — Alexa-inspired
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color(red: 0.05, green: 0.05, blue: 0.1),
-                    Color(red: 0.1, green: 0.05, blue: 0.15),
-                    Color.black
+                    Color(red: 0.02, green: 0.05, blue: 0.13),
+                    Color(red: 0.04, green: 0.07, blue: 0.18),
+                    Color(red: 0.01, green: 0.03, blue: 0.09)
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // Modern Header
                 SimpleHeaderView(
                     searchText: $searchText,
                     showSearch: $showSearch
                 )
-                
+
                 if showSearch {
                     // Search View with filters
                     SearchView(searchText: $searchText) { movie in
@@ -122,24 +54,25 @@ struct SimpleContentView: View {
                     TabView(selection: $selectedTab) {
                         // Home Tab
                         SimpleHomeTabView(
-                            movies: sampleMovies,
+                            movies: movieService.movies,
+                            isLoading: movieService.isLoading,
                             onMovieTap: { movie in
                                 selectedMovie = movie
                                 showMovieDetail = true
                             }
                         )
                         .tag(0)
-                        
+
                         // Categories Tab
                         SimpleCategoriesTabView(
-                            movies: sampleMovies,
+                            movies: movieService.movies,
                             onMovieTap: { movie in
                                 selectedMovie = movie
                                 showMovieDetail = true
                             }
                         )
                         .tag(1)
-                        
+
                         // Downloads Tab
                         SimpleDownloadsTabView(
                             downloadedMovies: downloadedMovies,
@@ -149,10 +82,10 @@ struct SimpleContentView: View {
                             }
                         )
                         .tag(2)
-                        
+
                         // My List Tab
                         SimpleMyListTabView(
-                            movies: sampleMovies,
+                            movies: movieService.movies,
                             onMovieTap: { movie in
                                 selectedMovie = movie
                                 showMovieDetail = true
@@ -161,10 +94,12 @@ struct SimpleContentView: View {
                         .tag(3)
                     }
                     .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                    
-                    // Custom Tab Bar
-                    SimpleTabBar(selectedTab: $selectedTab)
                 }
+            }
+
+            // Floating pill tab bar — overlaid at bottom
+            if !showSearch {
+                SimpleTabBar(selectedTab: $selectedTab)
             }
         }
         .sheet(isPresented: $showMovieDetail) {
@@ -377,8 +312,7 @@ struct SimpleHeaderView: View {
             }
         }
         .background(
-            Color.black.opacity(0.8)
-                .blur(radius: 10)
+            Color(red: 0.02, green: 0.05, blue: 0.13).opacity(0.95)
         )
         .alert("Logout", isPresented: $showLogoutAlert) {
             Button("Cancel", role: .cancel) { }
@@ -396,41 +330,12 @@ struct SimpleHeaderView: View {
 struct SimpleSearchView: View {
     @Binding var searchText: String
     let onMovieTap: (Movie) -> Void
-    
-    private let sampleMovies: [Movie] = [
-        Movie(
-            title: "Stranger Things",
-            posterURL: "https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
-            backdropURL: "https://image.tmdb.org/t/p/w1280/56v2KjBlU4XaOv9rVYEQypROD7P.jpg",
-            releaseYear: 2016,
-            rating: "TV-14",
-            duration: 50,
-            genre: "Sci-Fi, Horror",
-            isMovie: false,
-            isTrending: true,
-            isFeatured: true,
-            description: "When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces, and one strange little girl."
-        ),
-        Movie(
-            title: "The Crown",
-            posterURL: "https://image.tmdb.org/t/p/w500/1M876Kj8FgGzfSJkXhgdXz5QrZ5.jpg",
-            backdropURL: "https://image.tmdb.org/t/p/w1280/1M876Kj8FgGzfSJkXhgdXz5QrZ5.jpg",
-            releaseYear: 2016,
-            rating: "TV-MA",
-            duration: 60,
-            genre: "Drama, History",
-            isMovie: false,
-            isTrending: true,
-            isFeatured: false,
-            description: "Follows the political rivalries and romance of Queen Elizabeth II's reign and the events that shaped the second half of the 20th century."
-        )
-    ]
-    
+
+    private var allMovies: [Movie] { MovieService.shared.movies }
+
     var filteredMovies: [Movie] {
-        if searchText.isEmpty {
-            return sampleMovies
-        }
-        return sampleMovies.filter { movie in
+        if searchText.isEmpty { return allMovies }
+        return allMovies.filter { movie in
             movie.title.localizedCaseInsensitiveContains(searchText) ||
             movie.genre.localizedCaseInsensitiveContains(searchText)
         }
@@ -456,40 +361,92 @@ struct SimpleSearchView: View {
 // MARK: - Simple Tab Views
 struct SimpleHomeTabView: View {
     let movies: [Movie]
+    let isLoading: Bool
     let onMovieTap: (Movie) -> Void
-    
+    @EnvironmentObject var watchProgressService: WatchProgressService
+    @EnvironmentObject var profileService: ProfileService
+
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            LazyVStack(spacing: 24) {
-                // Hero Section
-                if let featuredMovie = movies.first(where: { $0.isFeatured }) {
-                    SimpleHeroSection(movie: featuredMovie, onTap: { onMovieTap(featuredMovie) })
+            VStack(spacing: 24) {
+                if isLoading && movies.isEmpty {
+                    // Loading skeleton
+                    VStack(spacing: 24) {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.06))
+                            .frame(height: 400)
+                            .padding(.horizontal, 20)
+                        ForEach(0..<3, id: \.self) { _ in
+                            VStack(alignment: .leading, spacing: 12) {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.white.opacity(0.06))
+                                    .frame(width: 140, height: 18)
+                                    .padding(.horizontal, 20)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 16) {
+                                        ForEach(0..<4, id: \.self) { _ in
+                                            RoundedRectangle(cornerRadius: 16)
+                                                .fill(Color.white.opacity(0.06))
+                                                .frame(width: 160, height: 240)
+                                        }
+                                    }
+                                    .padding(.horizontal, 20)
+                                }
+                                .frame(height: 240)
+                            }
+                        }
+                    }
+                } else {
+                    // Hero Section
+                    if let featuredMovie = movies.first(where: { $0.isFeatured }) {
+                        SimpleHeroSection(movie: featuredMovie, onTap: { onMovieTap(featuredMovie) })
+                    }
+
+                    // Feature F — Continue Watching
+                    if let profileId = profileService.currentProfile?.id {
+                        let continueItems = watchProgressService.inProgress(for: profileId)
+                        let historyItems = watchProgressService.history(for: profileId)
+
+                        if !continueItems.isEmpty {
+                            ContinueWatchingSection(
+                                items: continueItems,
+                                movies: movies,
+                                onMovieTap: onMovieTap
+                            )
+                        }
+
+                        // Feature H — Recently Watched
+                        if !historyItems.isEmpty {
+                            RecentlyWatchedSection(
+                                items: historyItems,
+                                movies: movies,
+                                onMovieTap: onMovieTap
+                            )
+                        }
+                    }
+
+                    // Content Sections
+                    SimpleContentSection(
+                        title: "Trending Now",
+                        movies: movies.filter { $0.isTrending },
+                        onMovieTap: onMovieTap
+                    )
+                    SimpleContentSection(
+                        title: "New Releases",
+                        movies: movies.prefix(6).map { $0 },
+                        onMovieTap: onMovieTap
+                    )
+                    SimpleContentSection(
+                        title: "Movies",
+                        movies: movies.filter { $0.isMovie },
+                        onMovieTap: onMovieTap
+                    )
+                    SimpleContentSection(
+                        title: "TV Shows",
+                        movies: movies.filter { !$0.isMovie },
+                        onMovieTap: onMovieTap
+                    )
                 }
-                
-                // Content Sections
-                SimpleContentSection(
-                    title: "Trending Now",
-                    movies: movies.filter { $0.isTrending },
-                    onMovieTap: onMovieTap
-                )
-                
-                SimpleContentSection(
-                    title: "New Releases",
-                    movies: movies.prefix(6).map { $0 },
-                    onMovieTap: onMovieTap
-                )
-                
-                SimpleContentSection(
-                    title: "Movies",
-                    movies: movies.filter { $0.isMovie },
-                    onMovieTap: onMovieTap
-                )
-                
-                SimpleContentSection(
-                    title: "TV Shows",
-                    movies: movies.filter { !$0.isMovie },
-                    onMovieTap: onMovieTap
-                )
             }
             .padding(.bottom, 100)
         }
@@ -690,10 +647,14 @@ struct MyListMovieCard: View {
                     .frame(width: 160, height: 240)
                     .cornerRadius(16)
                     .clipped()
-                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                    .shadow(color: Color(red: 0.02, green: 0.05, blue: 0.2).opacity(0.6), radius: 10, x: 0, y: 5)
                     .scaleEffect(isPressed ? 0.95 : 1.0)
                     .opacity(imageLoaded ? 1.0 : 0.7)
-                    
+
                     // Remove button
                     Button(action: {
                         showRemoveConfirmation = true
@@ -749,6 +710,7 @@ struct SimpleHeroSection: View {
     @EnvironmentObject var profileService: ProfileService
     @State private var imageLoaded = false
     @State private var isInMyList = false
+    @State private var showPlayer = false
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -826,10 +788,10 @@ struct SimpleHeroSection: View {
                     .fixedSize(horizontal: false, vertical: true)
                 
                 HStack(spacing: 16) {
-                    Button(action: onTap) {
+                    Button(action: { showPlayer = true }) {
                         HStack(spacing: 8) {
                             Image(systemName: "play.fill")
-                            Text("Play Now")
+                            Text("Play Trailer")
                                 .fontWeight(.semibold)
                         }
                         .font(.headline)
@@ -844,6 +806,9 @@ struct SimpleHeroSection: View {
                         )
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .fullScreenCover(isPresented: $showPlayer) {
+                        VideoPlayerView(movie: movie)
+                    }
                     
                     Button(action: {
                         if let profileId = profileService.currentProfile?.id {
@@ -927,6 +892,7 @@ struct SimpleContentSection: View {
                 }
                 .padding(.horizontal, 20)
             }
+            .frame(height: 290) // pin height: 240 card + 50 title row
         }
     }
 }
@@ -974,20 +940,24 @@ struct SimpleMovieCard: View {
                 .frame(width: 160, height: 240)
                 .cornerRadius(16)
                 .clipped()
-                .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+                .shadow(color: Color(red: 0.02, green: 0.05, blue: 0.2).opacity(0.6), radius: 10, x: 0, y: 5)
                 .scaleEffect(isPressed ? 0.95 : 1.0)
                 .opacity(imageLoaded ? 1.0 : 0.7)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(movie.title)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
-                    
+
                     Text(movie.genre)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color.white.opacity(0.45))
                         .lineLimit(1)
                 }
                 .frame(width: 160, alignment: .leading)
@@ -1006,18 +976,24 @@ struct SimpleCategoryChip: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(isSelected ? .white : .gray)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .foregroundColor(isSelected ? .white : Color.white.opacity(0.5))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 9)
                 .background(
                     isSelected ?
-                    AnyView(LinearGradient(
-                        gradient: Gradient(colors: [Color.red, Color.red.opacity(0.8)]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )) : AnyView(Color.black.opacity(0.3))
+                    AnyView(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.red)
+                    ) :
+                    AnyView(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color(red: 0.06, green: 0.1, blue: 0.2))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            )
+                    )
                 )
-                .cornerRadius(20)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -1037,7 +1013,7 @@ struct SimpleTabBar: View {
                     selectedTab = 0
                 }
             }
-            
+
             SimpleTabButton(
                 title: "Categories",
                 icon: "square.grid.2x2.fill",
@@ -1047,7 +1023,7 @@ struct SimpleTabBar: View {
                     selectedTab = 1
                 }
             }
-            
+
             SimpleTabButton(
                 title: "Downloads",
                 icon: "arrow.down.circle.fill",
@@ -1057,7 +1033,7 @@ struct SimpleTabBar: View {
                     selectedTab = 2
                 }
             }
-            
+
             SimpleTabButton(
                 title: "My List",
                 icon: "heart.fill",
@@ -1068,12 +1044,19 @@ struct SimpleTabBar: View {
                 }
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
         .background(
-            Color.black.opacity(0.9)
-                .blur(radius: 10)
+            RoundedRectangle(cornerRadius: 32)
+                .fill(Color(red: 0.06, green: 0.1, blue: 0.2))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 32)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.6), radius: 24, x: 0, y: 8)
         )
+        .padding(.horizontal, 28)
+        .padding(.bottom, 16)
     }
 }
 
@@ -1085,26 +1068,27 @@ struct SimpleTabButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(isSelected ? .white : .gray)
-                
+            VStack(spacing: 4) {
+                ZStack {
+                    // Circular highlight for active tab
+                    if isSelected {
+                        Circle()
+                            .fill(Color.red.opacity(0.18))
+                            .frame(width: 52, height: 52)
+                    }
+                    Image(systemName: icon)
+                        .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
+                        .foregroundColor(isSelected ? .red : Color.white.opacity(0.45))
+                        .scaleEffect(isSelected ? 1.1 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+                }
+                .frame(width: 52, height: 52)
+
                 Text(title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(isSelected ? .white : .gray)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(isSelected ? .red : Color.white.opacity(0.45))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(
-                isSelected ?
-                AnyView(LinearGradient(
-                    gradient: Gradient(colors: [Color.red.opacity(0.8), Color.red.opacity(0.6)]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )) : AnyView(Color.clear)
-            )
-            .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -1160,11 +1144,13 @@ struct SimpleMovieDetailView: View {
     @State private var isPlayPressed = false
     @State private var isDownloadPressed = false
     @State private var isInMyList = false
+    @State private var showPlayer = false
+    @State private var runtime: Int? = nil
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-            
+            Color(red: 0.02, green: 0.05, blue: 0.13).ignoresSafeArea()
+
             ScrollView {
                 VStack(spacing: 0) {
                     // Full poster image
@@ -1225,6 +1211,18 @@ struct SimpleMovieDetailView: View {
                         
                         .padding(.horizontal, 20)
                         
+                        // Runtime row (real value fetched from TMDB)
+                        if let rt = runtime {
+                            HStack(spacing: 6) {
+                                Image(systemName: "clock")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.5))
+                                Text(movie.isMovie ? "\(rt) min" : "\(rt) min / ep")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
+                        }
+
                         // Action buttons
                         VStack(spacing: 16) {
                             // Play Now button
@@ -1232,16 +1230,16 @@ struct SimpleMovieDetailView: View {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                                     isPlayPressed = true
                                 }
-                                
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                                         isPlayPressed = false
                                     }
+                                    showPlayer = true
                                 }
                             }) {
                                 HStack(spacing: 12) {
                                     Image(systemName: "play.fill")
-                                    Text("Play Now")
+                                    Text("Play Trailer")
                                         .fontWeight(.semibold)
                                 }
                                 .font(.headline)
@@ -1345,6 +1343,19 @@ struct SimpleMovieDetailView: View {
             if let profileId = profileService.currentProfile?.id {
                 isInMyList = myListService.isInMyList(movieTitle: movie.title, profileId: profileId)
             }
+        }
+        .task {
+            // Fetch real runtime from TMDB
+            if movie.tmdbId != 0 {
+                if movie.isMovie {
+                    runtime = await TMDBService.shared.fetchMovieRuntime(id: movie.tmdbId)
+                } else {
+                    runtime = await TMDBService.shared.fetchTVRuntime(id: movie.tmdbId)
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showPlayer) {
+            VideoPlayerView(movie: movie)
         }
     }
 }
