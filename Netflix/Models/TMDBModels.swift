@@ -26,13 +26,13 @@ struct TMDBMediaItem: Codable, Identifiable {
     let id: Int
     let title: String?           // movies
     let name: String?            // TV shows
-    let overview: String
+    let overview: String?
     let posterPath: String?
     let backdropPath: String?
     let releaseDate: String?     // movies
     let firstAirDate: String?    // TV shows
-    let voteAverage: Double
-    let genreIds: [Int]
+    let voteAverage: Double?
+    let genreIds: [Int]?
     let mediaType: String?       // present in trending/multi results
 
     enum CodingKeys: String, CodingKey {
@@ -71,10 +71,10 @@ struct TMDBGenreResponse: Codable {
 struct TMDBVideo: Codable, Identifiable {
     let id: String
     let key: String
-    let name: String
-    let site: String
-    let type: String
-    let official: Bool
+    let name: String?
+    let site: String?
+    let type: String?
+    let official: Bool?
 
     var youtubeURL: URL? {
         guard site == "YouTube" else { return nil }

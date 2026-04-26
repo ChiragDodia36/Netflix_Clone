@@ -12,6 +12,7 @@ struct RecentlyWatchedSection: View {
     let items: [WatchProgress]
     let movies: [Movie]
     let onMovieTap: (Movie) -> Void
+    @State private var showHistory = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -20,9 +21,7 @@ struct RecentlyWatchedSection: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                 Spacer()
-                NavigationLink {
-                    ViewingHistoryView(items: items, movies: movies, onMovieTap: onMovieTap)
-                } label: {
+                Button(action: { showHistory = true }) {
                     Text("See All")
                         .font(.caption)
                         .fontWeight(.semibold)
@@ -41,9 +40,20 @@ struct RecentlyWatchedSection: View {
                         }
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.leading, 20)
+                .padding(.trailing, 20)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: 290)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .sheet(isPresented: $showHistory) {
+            NavigationStack {
+                ViewingHistoryView(items: items, movies: movies, onMovieTap: { movie in
+                    showHistory = false
+                    onMovieTap(movie)
+                })
+            }
         }
     }
 }

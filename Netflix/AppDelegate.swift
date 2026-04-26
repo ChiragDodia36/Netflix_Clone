@@ -13,7 +13,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         supportedInterfaceOrientationsFor window: UIWindow?
     ) -> UIInterfaceOrientationMask {
-        // Allow landscape inside SFSafariViewController (YouTube player)
-        return .allButUpsideDown
+        return AppDelegate.orientationLock
     }
 }

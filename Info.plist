@@ -24,6 +24,10 @@
 	<string>b79c18499b6b3929c4618dd432bce2b1</string>
 	<key>VimeoAccessToken</key>
 	<string>5e410f2082342b92270a8037082d7b3a</string>
+	<key>SupabaseURL</key>
+	<string>https://ppjecjdqintopgrtidgd.supabase.co</string>
+	<key>SupabaseAnonKey</key>
+	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwamVjamRxaW50b3BncnRpZGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNjY4NjMsImV4cCI6MjA5Mjc0Mjg2M30.dUyiDVupLe21yNIynsBpWQmMYJaPAkOcu_PLST49miY</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -57,6 +61,13 @@
 				<false/>
 			</dict>
 			<key>vimeocdn.com</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+			</dict>
+			<key>supabase.co</key>
 			<dict>
 				<key>NSIncludesSubdomains</key>
 				<true/>

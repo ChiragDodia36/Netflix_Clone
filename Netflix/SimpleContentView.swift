@@ -21,38 +21,24 @@ struct SimpleContentView: View {
     @State private var showFilters = false
     @State private var filters = SearchFilters()
     @State private var downloadedMovies: [Movie] = []
+    @State private var showJoinParty = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Deep navy background — Alexa-inspired
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.02, green: 0.05, blue: 0.13),
-                    Color(red: 0.04, green: 0.07, blue: 0.18),
-                    Color(red: 0.01, green: 0.03, blue: 0.09)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Modern Header
                 SimpleHeaderView(
                     searchText: $searchText,
-                    showSearch: $showSearch
+                    showSearch: $showSearch,
+                    showJoinParty: $showJoinParty
                 )
 
-                if showSearch {
-                    // Search View with filters
-                    SearchView(searchText: $searchText) { movie in
-                        selectedMovie = movie
-                        showMovieDetail = true
-                    }
-                } else {
-                    // Main Content with Tab Navigation
-                    TabView(selection: $selectedTab) {
-                        // Home Tab
+                // Main Content
+                Group {
+                    switch selectedTab {
+                    case 0:
                         SimpleHomeTabView(
                             movies: movieService.movies,
                             isLoading: movieService.isLoading,
@@ -61,9 +47,7 @@ struct SimpleContentView: View {
                                 showMovieDetail = true
                             }
                         )
-                        .tag(0)
-
-                        // Categories Tab
+                    case 1:
                         SimpleCategoriesTabView(
                             movies: movieService.movies,
                             onMovieTap: { movie in
@@ -71,19 +55,21 @@ struct SimpleContentView: View {
                                 showMovieDetail = true
                             }
                         )
-                        .tag(1)
-
-                        // Downloads Tab
-                        SimpleDownloadsTabView(
-                            downloadedMovies: downloadedMovies,
-                            onMovieTap: { movie in
+                    case 2:
+                        VStack {
+                            TextField("Search movies...", text: $searchText)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .padding()
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(10)
+                                .padding()
+                                .foregroundColor(.white)
+                            SimpleSearchView(searchText: $searchText) { movie in
                                 selectedMovie = movie
                                 showMovieDetail = true
                             }
-                        )
-                        .tag(2)
-
-                        // My List Tab
+                        }
+                    default:
                         SimpleMyListTabView(
                             movies: movieService.movies,
                             onMovieTap: { movie in
@@ -91,59 +77,38 @@ struct SimpleContentView: View {
                                 showMovieDetail = true
                             }
                         )
-                        .tag(3)
                     }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                 }
             }
 
-            // Floating pill tab bar — overlaid at bottom
-            if !showSearch {
-                SimpleTabBar(selectedTab: $selectedTab)
-            }
+            // Floating pill tab bar
+            SimpleTabBar(selectedTab: $selectedTab)
         }
         .sheet(isPresented: $showMovieDetail) {
             if let movie = selectedMovie {
                 SimpleMovieDetailView(movie: movie)
             }
         }
-        .sheet(isPresented: $showFilters) {
-            SearchFiltersView(filters: $filters) {
-                // Apply filters
-                searchService.currentFilters = filters
-                searchService.search(query: searchText, filters: filters)
-            }
+        .sheet(isPresented: $showJoinParty) {
+            JoinWatchPartyView()
         }
         .onChange(of: searchText) { newValue in
             if !newValue.isEmpty {
                 searchService.search(query: newValue, filters: filters)
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: showMovieDetail)
-        .animation(.easeInOut(duration: 0.3), value: showSearch)
         .onAppear {
-            // Load my list for the current profile
-            print("🎬 SimpleContentView appeared")
             if let profileId = profileService.currentProfile?.id {
-                print("   Current profile: \(profileService.currentProfile?.name ?? "unknown") (\(profileId))")
                 myListService.loadMyList(for: profileId)
-            } else {
-                print("   No current profile!")
             }
         }
         .onChange(of: profileService.currentProfile?.id) { newProfileId in
-            // Reload my list when profile changes
-            print("🔄 Profile changed detected in SimpleContentView")
-            print("   New profile ID: \(newProfileId?.uuidString ?? "nil")")
             if let profileId = profileService.currentProfile?.id {
-                print("   Loading My List for new profile...")
                 myListService.loadMyList(for: profileId)
             }
         }
         .onChange(of: selectedTab) { newTab in
-            // Reload My List when My List tab (tab 3) is selected
             if newTab == 3 {
-                print("📑 My List tab selected - reloading...")
                 if let profileId = profileService.currentProfile?.id {
                     myListService.loadMyList(for: profileId)
                 }
@@ -156,173 +121,36 @@ struct SimpleContentView: View {
 struct SimpleHeaderView: View {
     @Binding var searchText: String
     @Binding var showSearch: Bool
-    @State private var showFilters = false
-    @State private var showProfileMenu = false
-    @State private var showLogoutAlert = false
-    @EnvironmentObject var authService: LocalAuthService
-    @EnvironmentObject var profileService: ProfileService
-    
+    @Binding var showJoinParty: Bool
+
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack {
+            Text("CINEMORA")
+                .font(.system(size: 28, weight: .heavy, design: .default))
+                .foregroundColor(Color(red: 229/255, green: 9/255, blue: 20/255))
+                .frame(maxWidth: .infinity)
+
             HStack {
-                // Netflix Logo
-                HStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(LinearGradient(
-                                gradient: Gradient(colors: [Color.red, Color.red.opacity(0.8)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ))
-                            .frame(width: 36, height: 24)
-                        
-                        HStack(spacing: 2) {
-                            Rectangle()
-                                .fill(Color.white)
-                                .frame(width: 3, height: 12)
-                            
-                            Rectangle()
-                                .fill(Color.white)
-                                .frame(width: 3, height: 12)
-                            
-                            Rectangle()
-                                .fill(Color.white)
-                                .frame(width: 3, height: 12)
-                        }
-                    }
-                    
-                    Text("Cinemora")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
-                }
-                
                 Spacer()
-                
-                // Search and Profile
-                HStack(spacing: 20) {
-                    Button(action: {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            showSearch.toggle()
-                            if !showSearch {
-                                searchText = ""
-                            }
-                        }
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.white.opacity(0.1))
-                                .frame(width: 44, height: 44)
-                            
-                            Image(systemName: showSearch ? "xmark" : "magnifyingglass")
-                                .font(.title3)
-                                .foregroundColor(.white)
-                        }
+                Button(action: { showJoinParty = true }) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "person.2.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text("Join Party")
+                            .font(.system(size: 12, weight: .semibold))
                     }
-                    .buttonStyle(PlainButtonStyle())
-                    
-                    Menu {
-                        // Profile Name
-                        if let profile = profileService.currentProfile {
-                            Text(profile.name)
-                                .font(.headline)
-                        }
-                        
-                        Divider()
-                        
-                        // Switch Profile
-                        Button(action: {
-                            profileService.clearCurrentProfile()
-                        }) {
-                            Label("Switch Profile", systemImage: "person.2.fill")
-                        }
-                        
-                        // Logout
-                        Button(role: .destructive, action: {
-                            showLogoutAlert = true
-                        }) {
-                            Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
-                        }
-                    } label: {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            profileService.currentProfile?.colorValue ?? .red,
-                                            (profileService.currentProfile?.colorValue ?? .red).opacity(0.7)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 44, height: 44)
-                            
-                            if let profile = profileService.currentProfile {
-                                Text(String(profile.name.prefix(1).uppercased()))
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color.red.opacity(0.85))
+                    .cornerRadius(20)
                 }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 10)
-            .padding(.bottom, 16)
-            
-            // Search Bar (when active)
-            if showSearch {
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    
-                    TextField("Search movies, shows...", text: $searchText)
-                        .textFieldStyle(PlainTextFieldStyle())
-                        .foregroundColor(.white)
-                        .font(.system(size: 16, weight: .medium))
-                    
-                    if !searchText.isEmpty {
-                        Button(action: {
-                            searchText = ""
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    
-                    // Filters button
-                    Button(action: {
-                        showFilters = true
-                    }) {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                            .foregroundColor(.red)
-                            .font(.title2)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color.white.opacity(0.1))
-                .cornerRadius(25)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 16)
-                .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .move(edge: .top)),
-                    removal: .opacity.combined(with: .move(edge: .top))
-                ))
+                .padding(.trailing, 16)
             }
         }
-        .background(
-            Color(red: 0.02, green: 0.05, blue: 0.13).opacity(0.95)
-        )
-        .alert("Logout", isPresented: $showLogoutAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Logout", role: .destructive) {
-                authService.signOut()
-                profileService.clearCurrentProfile()
-            }
-        } message: {
-            Text("Are you sure you want to logout?")
-        }
+        .padding(.top, 50)
+        .padding(.bottom, 15)
+        .background(Color.black)
     }
 }
 
@@ -365,90 +193,200 @@ struct SimpleHomeTabView: View {
     let onMovieTap: (Movie) -> Void
     @EnvironmentObject var watchProgressService: WatchProgressService
     @EnvironmentObject var profileService: ProfileService
+    @State private var selectedCategory = "ALL"
+    
+    let categories = ["ALL", "ACTION", "ADVENTURE", "ROMANCE", "THRILLER"]
+
+    // Computed properties
+    private var filteredMovies: [Movie] {
+        if selectedCategory == "ALL" { return movies }
+        return movies.filter { $0.genre.localizedCaseInsensitiveContains(selectedCategory) }
+    }
+    
+    private var heroMovie: Movie? {
+        filteredMovies.first(where: { $0.isFeatured }) ?? filteredMovies.first
+    }
+    
+    private var newMovies: [Movie] {
+        // Just return a subset of movies for the CoverFlow, unaffected by category pills
+        Array(movies.suffix(10).reversed())
+    }
+
+    private var trendingMovies: [Movie] {
+        movies.filter { $0.isTrending }
+    }
+
+    private var continueItems: [WatchProgress] {
+        guard let profileId = profileService.currentProfile?.id else { return [] }
+        return watchProgressService.inProgress(for: profileId)
+    }
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 24) {
-                if isLoading && movies.isEmpty {
-                    // Loading skeleton
-                    VStack(spacing: 24) {
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.white.opacity(0.06))
-                            .frame(height: 400)
-                            .padding(.horizontal, 20)
-                        ForEach(0..<3, id: \.self) { _ in
-                            VStack(alignment: .leading, spacing: 12) {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.white.opacity(0.06))
-                                    .frame(width: 140, height: 18)
-                                    .padding(.horizontal, 20)
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 16) {
-                                        ForEach(0..<4, id: \.self) { _ in
-                                            RoundedRectangle(cornerRadius: 16)
-                                                .fill(Color.white.opacity(0.06))
-                                                .frame(width: 160, height: 240)
-                                        }
-                                    }
-                                    .padding(.horizontal, 20)
-                                }
-                                .frame(height: 240)
+            VStack(spacing: 20) {
+                let _ = Color.clear // forces full-width VStack layout in TabView
+                // Categories Pill Scroll
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 15) {
+                        ForEach(categories, id: \.self) { category in
+                            Button(action: {
+                                withAnimation { selectedCategory = category }
+                            }) {
+                                Text(category)
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(selectedCategory == category ? .white : .gray)
+                                    .padding(.horizontal, selectedCategory == category ? 20 : 10)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(selectedCategory == category ? Color(red: 229/255, green: 9/255, blue: 20/255) : Color.clear)
+                                    )
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                }
+                
+                if isLoading && movies.isEmpty {
+                    loadingSkeleton
                 } else {
-                    // Hero Section
-                    if let featuredMovie = movies.first(where: { $0.isFeatured }) {
-                        SimpleHeroSection(movie: featuredMovie, onTap: { onMovieTap(featuredMovie) })
+                    // Hero Banner (Inset)
+                    if let hero = heroMovie {
+                        Button(action: { onMovieTap(hero) }) {
+                            ZStack {
+                                AsyncImage(url: URL(string: hero.backdropURL)) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                } placeholder: {
+                                    Rectangle().fill(Color.gray.opacity(0.3))
+                                }
+                                .frame(height: 200)
+                                .frame(maxWidth: .infinity)
+                                .cornerRadius(12)
+                                .clipped()
+                                
+                                LinearGradient(gradient: Gradient(colors: [.clear, .black.opacity(0.8)]), startPoint: .top, endPoint: .bottom)
+                                    .cornerRadius(12)
+                                
+                                VStack {
+                                    Spacer()
+                                    Text(hero.title)
+                                        .font(.system(size: 24, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .padding(.bottom, 15)
+                                }
+                            }
+                            .shadow(color: Color.black.opacity(0.5), radius: 15, x: 0, y: 5)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal, 20)
+                    }
+                    
+                    // New Movies (3D Carousel, unaffected by category pills)
+                    CoverFlowCarousel(
+                        movies: newMovies,
+                        onMovieTap: onMovieTap
+                    )
+                    
+                    if !continueItems.isEmpty {
+                        ContinueWatchingSection(
+                            items: continueItems,
+                            movies: movies,
+                            onMovieTap: onMovieTap
+                        )
+                        .padding(.top, 10)
                     }
 
-                    // Feature F — Continue Watching
-                    if let profileId = profileService.currentProfile?.id {
-                        let continueItems = watchProgressService.inProgress(for: profileId)
-                        let historyItems = watchProgressService.history(for: profileId)
-
-                        if !continueItems.isEmpty {
-                            ContinueWatchingSection(
-                                items: continueItems,
-                                movies: movies,
-                                onMovieTap: onMovieTap
-                            )
-                        }
-
-                        // Feature H — Recently Watched
-                        if !historyItems.isEmpty {
-                            RecentlyWatchedSection(
-                                items: historyItems,
-                                movies: movies,
-                                onMovieTap: onMovieTap
-                            )
-                        }
-                    }
-
-                    // Content Sections
                     SimpleContentSection(
                         title: "Trending Now",
-                        movies: movies.filter { $0.isTrending },
+                        movies: trendingMovies,
                         onMovieTap: onMovieTap
                     )
-                    SimpleContentSection(
-                        title: "New Releases",
-                        movies: movies.prefix(6).map { $0 },
-                        onMovieTap: onMovieTap
-                    )
-                    SimpleContentSection(
-                        title: "Movies",
-                        movies: movies.filter { $0.isMovie },
-                        onMovieTap: onMovieTap
-                    )
-                    SimpleContentSection(
-                        title: "TV Shows",
-                        movies: movies.filter { !$0.isMovie },
-                        onMovieTap: onMovieTap
-                    )
+                    .padding(.bottom, 40)
                 }
             }
+            .frame(maxWidth: .infinity)
             .padding(.bottom, 100)
+        }
+    }
+
+    private var loadingSkeleton: some View {
+        VStack(spacing: 20) {
+            // Skeleton Hero Banner
+            Rectangle()
+                .fill(Color.gray.opacity(0.2))
+                .aspectRatio(0.8, contentMode: .fit)
+                .cornerRadius(12)
+                .padding(.horizontal)
+            
+            // Skeleton Row (Carousel/Shows)
+            HStack(spacing: 15) {
+                ForEach(0..<4, id: \.self) { _ in
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 140, height: 210)
+                        .cornerRadius(8)
+                }
+            }
+            .padding(.horizontal)
+        }
+        .padding(.top, 10)
+    }
+}
+
+// MARK: - Carousel / CoverFlow
+struct CoverFlowCarousel: View {
+    let movies: [Movie]
+    let onMovieTap: (Movie) -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            HStack {
+                Text("NEW MOVIES")
+                    .font(.system(size: 18, weight: .heavy))
+                    .foregroundColor(.white)
+                Spacer()
+                Text("SEE ALL")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.gray)
+            }
+            .padding(.horizontal, 20)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: -30) {
+                    ForEach(Array(movies.enumerated()), id: \.element.id) { index, movie in
+                        GeometryReader { geometry in
+                            let midX = geometry.frame(in: .global).midX
+                            let screenWidth = UIScreen.main.bounds.width
+                            let distance = abs(screenWidth / 2 - midX)
+                            let scale = max(0.8, 1 - distance / screenWidth)
+                            let zIndex = 1 - (distance / screenWidth)
+                            
+                            AsyncImage(url: URL(string: movie.posterURL)) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            } placeholder: {
+                                Rectangle().fill(Color.gray)
+                            }
+                            .frame(width: 140, height: 210)
+                            .cornerRadius(12)
+                            .shadow(color: .black.opacity(0.5), radius: 10, x: 0, y: 10)
+                            .scaleEffect(scale)
+                            .zIndex(zIndex)
+                            .onTapGesture {
+                                onMovieTap(movie)
+                            }
+                        }
+                        .frame(width: 140, height: 210)
+                    }
+                }
+                .padding(.horizontal, 40)
+                .padding(.vertical, 20)
+            }
         }
     }
 }
@@ -456,14 +394,44 @@ struct SimpleHomeTabView: View {
 struct SimpleCategoriesTabView: View {
     let movies: [Movie]
     let onMovieTap: (Movie) -> Void
+    @State private var selectedType = "All"
     @State private var selectedCategory = "All"
-    
-    let categories = ["All", "Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Romance", "Thriller"]
+
+    private let contentTypes = ["All", "Movies", "TV Shows"]
+    private let categories = ["All", "Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Romance", "Thriller"]
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 24) {
-                // Category Filter
+            VStack(spacing: 20) {
+                // Content Type Segmented Control
+                HStack(spacing: 4) {
+                    ForEach(contentTypes, id: \.self) { type in
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                selectedType = type
+                                selectedCategory = "All"
+                            }
+                        }) {
+                            Text(type)
+                                .font(.system(size: 14, weight: selectedType == type ? .bold : .semibold))
+                                .foregroundColor(selectedType == type ? .white : Color.white.opacity(0.45))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(selectedType == type ? Color.red : Color.clear)
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(4)
+                .background(Color.white.opacity(0.07))
+                .cornerRadius(12)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+
+                // Genre Filter
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(categories, id: \.self) { category in
@@ -479,11 +447,20 @@ struct SimpleCategoriesTabView: View {
                     }
                     .padding(.horizontal, 20)
                 }
-                
-                // Movies Grid
+
+                // Results count
+                HStack {
+                    Text("\(filteredMovies.count) titles")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color.white.opacity(0.4))
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+
+                // Grid
                 LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
+                    GridItem(.flexible(), spacing: 16),
+                    GridItem(.flexible(), spacing: 16)
                 ], spacing: 20) {
                     ForEach(filteredMovies) { movie in
                         SimpleMovieCard(movie: movie) {
@@ -493,17 +470,22 @@ struct SimpleCategoriesTabView: View {
                 }
                 .padding(.horizontal, 20)
             }
+            .frame(maxWidth: .infinity)
             .padding(.bottom, 100)
         }
     }
-    
+
     private var filteredMovies: [Movie] {
-        if selectedCategory == "All" {
-            return movies
+        var result = movies
+        switch selectedType {
+        case "Movies":   result = result.filter { $0.isMovie }
+        case "TV Shows": result = result.filter { !$0.isMovie }
+        default: break
         }
-        return movies.filter { movie in
-            movie.genre.lowercased().contains(selectedCategory.lowercased())
+        if selectedCategory != "All" {
+            result = result.filter { $0.genre.lowercased().contains(selectedCategory.lowercased()) }
         }
+        return result
     }
 }
 
@@ -890,10 +872,13 @@ struct SimpleContentSection: View {
                         }
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.leading, 20)
+                .padding(.trailing, 20)
             }
-            .frame(height: 290) // pin height: 240 card + 50 title row
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 290)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -1001,94 +986,69 @@ struct SimpleCategoryChip: View {
 
 struct SimpleTabBar: View {
     @Binding var selectedTab: Int
+    @EnvironmentObject var authService: LocalAuthService
+    @EnvironmentObject var profileService: ProfileService
+    @State private var showLogoutAlert = false
 
     var body: some View {
-        HStack(spacing: 0) {
-            SimpleTabButton(
-                title: "Home",
-                icon: "house.fill",
-                isSelected: selectedTab == 0
-            ) {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    selectedTab = 0
-                }
-            }
-
-            SimpleTabButton(
-                title: "Categories",
-                icon: "square.grid.2x2.fill",
-                isSelected: selectedTab == 1
-            ) {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    selectedTab = 1
-                }
-            }
-
-            SimpleTabButton(
-                title: "Downloads",
-                icon: "arrow.down.circle.fill",
-                isSelected: selectedTab == 2
-            ) {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    selectedTab = 2
-                }
-            }
-
-            SimpleTabButton(
-                title: "My List",
-                icon: "heart.fill",
-                isSelected: selectedTab == 3
-            ) {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    selectedTab = 3
-                }
+        HStack {
+            SimpleTabButton(icon: "house", isSelected: selectedTab == 0) { selectedTab = 0 }
+            Spacer()
+            SimpleTabButton(icon: "tv", isSelected: selectedTab == 1) { selectedTab = 1 }
+            Spacer()
+            SimpleTabButton(icon: "magnifyingglass", isSelected: selectedTab == 2) { selectedTab = 2 }
+            Spacer()
+            SimpleTabButton(icon: "heart", isSelected: selectedTab == 3) { selectedTab = 3 }
+            Spacer()
+            
+            // Profile / Menu Button
+            Menu {
+                if let profile = profileService.currentProfile { Text(profile.name) }
+                Divider()
+                Button(action: { profileService.clearCurrentProfile() }) { Label("Switch Profile", systemImage: "person.2.fill") }
+                Button(role: .destructive, action: { showLogoutAlert = true }) { Label("Logout", systemImage: "rectangle.portrait.and.arrow.right") }
+            } label: {
+                SimpleTabButton(icon: "person", isSelected: selectedTab == 4) { selectedTab = 4 }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 30)
+        .padding(.vertical, 14)
         .background(
-            RoundedRectangle(cornerRadius: 32)
-                .fill(Color(red: 0.06, green: 0.1, blue: 0.2))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 32)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.6), radius: 24, x: 0, y: 8)
+            Color(red: 25/255, green: 25/255, blue: 25/255)
+                .cornerRadius(25)
+                .padding(.horizontal, 16)
         )
-        .padding(.horizontal, 28)
-        .padding(.bottom, 16)
+        .padding(.bottom, 10)
+        .alert("Logout", isPresented: $showLogoutAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Logout", role: .destructive) {
+                authService.signOut()
+                profileService.clearCurrentProfile()
+            }
+        }
     }
 }
 
 struct SimpleTabButton: View {
-    let title: String
-    let icon: String
+    let icon: String // system image name
     let isSelected: Bool
     let action: () -> Void
-
+    
     var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                ZStack {
-                    // Circular highlight for active tab
-                    if isSelected {
-                        Circle()
-                            .fill(Color.red.opacity(0.18))
-                            .frame(width: 52, height: 52)
-                    }
-                    Image(systemName: icon)
-                        .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
-                        .foregroundColor(isSelected ? .red : Color.white.opacity(0.45))
-                        .scaleEffect(isSelected ? 1.1 : 1.0)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+        Button(action: {
+            withAnimation(.spring()) { action() }
+        }) {
+            ZStack {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(red: 229/255, green: 9/255, blue: 20/255))
+                        .frame(width: 44, height: 44)
                 }
-                .frame(width: 52, height: 52)
-
-                Text(title)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(isSelected ? .red : Color.white.opacity(0.45))
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: isSelected ? .bold : .light))
+                    .foregroundColor(isSelected ? .white : .gray)
             }
-            .frame(maxWidth: .infinity)
+            .frame(width: 44, height: 44)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -1145,6 +1105,7 @@ struct SimpleMovieDetailView: View {
     @State private var isDownloadPressed = false
     @State private var isInMyList = false
     @State private var showPlayer = false
+    @State private var showWatchParty = false
     @State private var runtime: Int? = nil
     
     var body: some View {
@@ -1250,7 +1211,22 @@ struct SimpleMovieDetailView: View {
                                 .cornerRadius(25)
                                 .scaleEffect(isPlayPressed ? 0.95 : 1.0)
                             }
-                            
+
+                            // Watch Together button
+                            Button(action: { showWatchParty = true }) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "person.2.fill")
+                                    Text("Watch Together")
+                                        .fontWeight(.semibold)
+                                }
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color(red: 0.45, green: 0.18, blue: 0.85))
+                                .cornerRadius(25)
+                            }
+
                             // Secondary buttons row
                             HStack(spacing: 16) {
                                 // Add to List button
@@ -1356,6 +1332,10 @@ struct SimpleMovieDetailView: View {
         }
         .fullScreenCover(isPresented: $showPlayer) {
             VideoPlayerView(movie: movie)
+        }
+        .sheet(isPresented: $showWatchParty) {
+            WatchPartyView(movie: movie)
+                .environmentObject(profileService)
         }
     }
 }

@@ -29,9 +29,10 @@ struct ContinueWatchingSection: View {
                         }
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.leading, 20)
+                .padding(.trailing, 20)
             }
-            .frame(height: 310)
+            // Removed fixed height and maxWidth
         }
     }
 }

@@ -46,8 +46,11 @@ class ProfileService: ObservableObject {
     func loadProfiles(for userEmail: String? = nil, autoSelectProfile: Bool = false) {
         guard let data = userDefaults.data(forKey: profilesKey),
               let allProfiles = try? JSONDecoder().decode([AppUserProfile].self, from: data) else {
-            profiles = []
+            let demoProfile1 = AppUserProfile(name: "Demo 1", iconColor: "blue", userEmail: userEmail ?? "demo@cinemora.app", createdAt: Date())
+            let demoProfile2 = AppUserProfile(name: "Demo 2", iconColor: "red", userEmail: userEmail ?? "demo@cinemora.app", createdAt: Date())
+            profiles = [demoProfile1, demoProfile2]
             currentProfile = nil
+            saveAllProfiles(profiles)
             return
         }
         
@@ -295,7 +298,7 @@ struct ProfileCard: View {
         }) {
             VStack(spacing: 16) {
                 ZStack {
-                    Circle()
+                    RoundedRectangle(cornerRadius: 16)
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [
@@ -342,11 +345,11 @@ struct AddProfileCard: View {
         }) {
             VStack(spacing: 16) {
                 ZStack {
-                    Circle()
+                    RoundedRectangle(cornerRadius: 16)
                         .fill(Color.white.opacity(0.1))
                         .frame(width: 120, height: 120)
                         .overlay(
-                            Circle()
+                            RoundedRectangle(cornerRadius: 16)
                                 .stroke(Color.white.opacity(0.3), lineWidth: 2)
                         )
                     
@@ -676,7 +679,7 @@ struct ManageProfileCard: View {
         VStack(spacing: 16) {
             ZStack(alignment: .topTrailing) {
                 ZStack {
-                    Circle()
+                    RoundedRectangle(cornerRadius: 16)
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [

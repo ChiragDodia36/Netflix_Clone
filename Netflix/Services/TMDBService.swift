@@ -93,8 +93,8 @@ class TMDBService: ObservableObject {
     func toMovie(_ item: TMDBMediaItem, isTrending: Bool = false, isFeatured: Bool = false) -> Movie {
         let poster = item.posterPath.map { TMDBService.posterBase + $0 } ?? ""
         let backdrop = item.backdropPath.map { TMDBService.backdropBase + $0 } ?? poster
-        let genre = TMDBGenreMap.names(for: item.genreIds, isMovie: item.isMovie)
-        let rating = item.voteAverage > 7 ? (item.isMovie ? "PG-13" : "TV-14") : (item.isMovie ? "R" : "TV-MA")
+        let genre = TMDBGenreMap.names(for: item.genreIds ?? [], isMovie: item.isMovie)
+        let rating = (item.voteAverage ?? 0) > 7 ? (item.isMovie ? "PG-13" : "TV-14") : (item.isMovie ? "R" : "TV-MA")
 
         return Movie(
             tmdbId: item.id,
@@ -108,7 +108,7 @@ class TMDBService: ObservableObject {
             isMovie: item.isMovie,
             isTrending: isTrending,
             isFeatured: isFeatured,
-            description: item.overview
+            description: item.overview ?? "Explore the incredible journey in this thrilling new title."
         )
     }
 }

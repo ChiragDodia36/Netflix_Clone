@@ -23,10 +23,11 @@ class WatchProgressService: ObservableObject {
             .sorted { $0.lastWatchedAt > $1.lastWatchedAt }
     }
 
-    /// All watched items for this profile, newest first (viewing history)
+    /// Completed or barely-started items — excludes anything currently in Continue Watching
     func history(for profileId: UUID) -> [WatchProgress] {
-        progressItems
-            .filter { $0.profileId == profileId }
+        let inProgressIds = Set(inProgress(for: profileId).map { $0.id })
+        return progressItems
+            .filter { $0.profileId == profileId && !inProgressIds.contains($0.id) }
             .sorted { $0.lastWatchedAt > $1.lastWatchedAt }
     }
 
